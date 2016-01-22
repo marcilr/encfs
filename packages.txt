@@ -1,0 +1,15 @@
+packages.txt
+Created Thu Apr 11 09:45:37 AKDT 2013
+Copyright (C) 2013 by Raymond E. Marcil <marcilr@gmail.com>
+
+
+EncFS related packages
+
+
+Package          Descriptions
+-----------------------------------------------------------------------------
+cryptkeeper      EncFS system tray applet for GNOME
+encfs            encrypted virtual filesystem
+fuse-utils       Filesystem in USErspace (utilities)
+libpam-encfs     PAM module to automatically mount encfs filesystems on login
+
