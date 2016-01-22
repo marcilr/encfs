@@ -1,0 +1,9 @@
+unmount.txt
+Created Thu Apr 11 11:43:33 AKDT 2013
+Copyright (C) 2013 by Raymond E. Marcil <marcilr@gmail.com>
+
+
+Unmount bornite's /data/encrypted from bornite's /home/marcil/decrypted:
+
+malachite:~$ fusermount -u /home/marcilr/decrypted/
+
