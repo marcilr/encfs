@@ -11,3 +11,5 @@ mount.txt
 unmount.txt
   unmount encfs filesystem
 
+syntax.txt
+  Syntax
