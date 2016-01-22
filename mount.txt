@@ -1,0 +1,13 @@
+mount.txt
+Created Thu Apr 11 11:41:53 AKDT 2013
+Copyright (C) 2013 by Raymond E. Marcil <marcilr@gmail.com>
+
+
+To mount bornite's /data/encrypted/ on malachite:
+
+1. Bornite's /date/encrypted/ is mounted, via sshfs, to malachite's /usr/local/encrypted
+
+2. On malachite:
+malachite:~$ encfs /usr/local/encrypted/ /home/marcilr/decrypted/
+EncFS Password:
+malachite:~$
