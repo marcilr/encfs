@@ -1,0 +1,17 @@
+encfs.txt
+Created Thu Apr 11 09:40:08 AKDT 2013
+Copyright (C) 2013 by Raymond E. Marcil <marcilr@gmail.com>
+
+
+EncFS FUSE-based cryptographic filesystem
+
+
+Links
+=====
+EncFS website 
+http://www.arg0.net/encfs
+
+EncFS
+From Wikipedia, the free encyclopedia
+http://en.wikipedia.org/wiki/EncFS
+
