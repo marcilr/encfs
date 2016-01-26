@@ -3,6 +3,100 @@ Created Thu Apr 11 09:48:01 AKDT 2013
 Copyright (C) 2013 by Raymond E. Marcil <marcilr@gmail.com>
 
 
+Tue Jan 26 11:15:40 AKST 2016
+=============================
+Installation of EncFS om GCI Network Services, OSS covellite debian jessie
+8.3 amd64 workstation:
+
+1. Install EncFS on covellite:
+# aptitude install encfs
+The following NEW packages will be installed:
+  encfs librlog5{a} 
+0 packages upgraded, 2 newly installed, 0 to remove and 0 not upgraded.
+Need to get 324 kB of archives. After unpacking 1,905 kB will be used.
+Do you want to continue? [Y/n/?] Y
+
+Package configuration
+Encfs security informatio 
+According to a security audit by Taylor Hornby (Defuse Security), the
+current implementation of Encfs is vulnerable or potentially vulnerable
+to multiple types of attacks.  For example, an attacker with read/write
+access to encrypted data might lower the decryption complexity for
+subsequently encrypted data without this being noticed by a legitimate
+user, or might use timing analysis to deduce information.
+
+Until these issues are resolved, encfs should not be considered a safe
+
+click <OK>
+...
+Preconfiguring packages ...
+Selecting previously unselected package librlog5.
+(Reading database ... 285463 files and directories currently installed.)
+Preparing to unpack .../librlog5_1.4-2.1_amd64.deb ...
+Unpacking librlog5 (1.4-2.1) ...
+Selecting previously unselected package encfs.
+Preparing to unpack .../encfs_1.7.4-5_amd64.deb ...
+Unpacking encfs (1.7.4-5) ...
+Processing triggers for man-db (2.7.0.2-5) ...
+Setting up librlog5 (1.4-2.1) ...
+Setting up encfs (1.7.4-5) ...
+Processing triggers for libc-bin (2.19-18+deb8u2) ...
+                                         
+#
+
+Looks good.
+
+
+2. Test EncFS:
+svn $ cd ~/svn
+svn $ mkdir gci-decrypted
+svn $ cp -Rv gci/ gci-encrypted
+svn $ encfs /home/marcilr/svn/gci-encrypted/ /home/marcilr/svn/gci-decrypted/
+Creating new encrypted volume.
+Please choose from one of the following options:
+ enter "x" for expert configuration mode,
+ enter "p" for pre-configured paranoia mode,
+ anything else, or an empty line will select standard mode.
+?> p
+
+Paranoia configuration selected.
+
+Configuration finished.  The filesystem to be created has
+the following properties:
+Filesystem cipher: "ssl/aes", version 3:0:2
+Filename encoding: "nameio/block", version 3:0:1
+Key Size: 256 bits
+Block Size: 1024 bytes, including 8 byte MAC header
+Each file contains 8 byte header with unique IV data.
+Filenames encoded using IV chaining mode.
+File data IV is chained to filename IV.
+File holes passed through to ciphertext.
+
+-------------------------- WARNING --------------------------
+The external initialization-vector chaining option has been
+enabled.  This option disables the use of hard links on the
+filesystem. Without hard links, some programs may not work.
+The programs 'mutt' and 'procmail' are known to fail.  For
+more information, please see the encfs mailing list.
+If you would like to choose another configuration setting,
+please press CTRL-C now to abort and start over.
+
+Now you will need to enter a password for your filesystem.
+You will need to remember this password, as there is absolutely
+no recovery mechanism.  However, the password can be changed
+later using encfsctl.
+
+New Encfs Password:
+Verify Encfs Password:
+svn $
+
+NOTE: Full paths are required.
+
+Did not appear to do anything.  Need to read prior use of EncFS info.
+
+
+Thu Apr 11 09:48:01 AKDT 2013
+=============================
 Installation of EncFS lvm on bornite with use from malachite.
 
 bornite:   Debian squeeze amd64 6.0.7
