@@ -5,6 +5,10 @@ Copyright (C) 2016 by Raymond E. Marcil <marcilr@gmail.com>
 
 Filelist
 ========
+create.txt
+  Create and/or mount:
+  $ encfs ~/encrypted/ ~/decrypted
+
 mount.txt
   Mount encfs filesystem
 
