@@ -58,6 +58,7 @@ Advantages
 
 -- ict.griffith.edu.au
 
+
 Disadvantages
 =============
 * Some overhead (but what scheme hasn't).
@@ -105,3 +106,4 @@ http://en.wikipedia.org/wiki/EncFS
 
 EncFS - Encrypted File System (micro-how-to)
 https://www.ict.griffith.edu.au/anthony/info/crypto/encfs.hints
+
