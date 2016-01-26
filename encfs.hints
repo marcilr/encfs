@@ -1,0 +1,645 @@
+-------------------------------------------------------------------------------
+EncFS - Encrypted File System (micro-how-to)
+
+The EncFS file system is an ordinary directory containing encrypted files
+using a encryption hashed' filenames.  This 'directory' is mounted to another
+directory (using fuse) where it will appear in its decrypted form.
+
+That is the encrypted files are just ordinary binary files and with the
+correct times and tree structure. Only the names and contents of the files
+remain hidden.  The directory tree and rough file sizes are preserved!
+
+Advantages
+
+  * The encrypted can be stored on any normal file system, again without
+    decryption. That includes SAN, USB, or DVDs.  You do not even need to
+    worry that the 'remote' file services have access to your data as their
+    system never sees the decrypted data or passwords.  By default they
+    could see the encfs config file, unless separated (see below).
+
+  * Hardlinks work if the underlying filesystem allows their use.
+
+  * You can copy, update or synchronised the directory with another copy of
+    that directory (say on another machine) without needing to decrypt it or
+    even have the password!  As such automated backups can still be performed
+    securely, even by other people.
+
+  * Similarly you can use Rsync 'delta difference' to syncronize between
+    multiple copies of the same encrypted file system!!!!  In fact ANY file
+    system copy or transfer method can be used.  The files remain... files.
+
+  * You can syncronize with 'the cloud' without worry about some unknown SysOp
+    looking at your files, regardless of what the their policy is or is not.
+
+  * You can (with special techniques) merge two or more (I have a dozen)
+    encrypted directories trees into the same top level (or faked top levels)
+    of the same encrypted data directory.
+
+    There is a small chance of filename clashes.  That is one encrypted
+    filename is used by two seperate repositories, but is is highly unlikely.
+    This is can only happen on the top level as sub-directories contents
+    remain separate, as each sub-directory can only belong to one specific
+    encfs repository.
+
+  * You can add 'chaff' to the encrypted directory with (faked hashed file
+    names and directories) to prevent someone knowng if all the data was
+    decrypted or by which password. Some files may never be decryptable, or
+    may have been created and left behind by 'lost' password. This allows
+    you to prevent rubber hose attacks if you make it obvious such chaff data
+    exists.
+
+
+Disadvantages
+
+  * Some overhead (but what scheme hasn't).
+
+  * Directory Structure and rough (not exact) files sizes in each directory is
+    visible.  The directory structure could have and should have be hidden in
+    a similar way to other file systems. That is a directory should have been
+    a special file containing a list of file pointers, files broken into
+    multiple smaller files, and file attributes stored in a file header (inode
+    equivelent).
+
+  * The 'encrypted hash filenames' make it obvious the directory contains an
+    EncFS (or similar) filesystem.  The presence of a encfs config file
+    would simply confirm this (you can store that config elsewhere).
+
+  * Most of the encrypting information (apart from the users password)
+    including iteration count, and salt, is visible in the encfs config file
+    at the top level of the encfs directory tree.  This provides valuable
+    information to a hacker.  Better to keep that information seperate (and
+    private) even if it is not strictly needed for encryption security.
+    Keep it on a USB as a required but separate physical key. See config
+    separation below.
+
+  * Some management of configuration files, and for adding chaff to
+    sub-directores is probably needed.
+
+  * Removal of excess and unwanted 'chaff' in a encfs directory is next to
+    imposible, unless a 'chaff dataset' is used. The only way to separate
+    chaff from real data is to decrypt and move all known and valid data to
+    a new encfs directory.
+
+-------------------------------------------------------------------------------
+Implementations and related applications
+
+   FUSE for linux -- the original implementation of EncFS
+       All modes supported, can do reverse encfs, config seperation,
+       and even network mounted encrypted stores (like dropbox)
+
+   BoxFetch for Windows -- GUI app for Windows, and Mobile phones
+       Note it doe not support all modes, just more common one
+
+   CloudFetch for Android -- Encfs with data stored in the cloud
+       Dropbox, SpiderOak, SparkleShare and Ubuntu One
+          https://play.google.com/store/apps/details?id=az.cloudfetch
+
+   EncFSAnywhere
+       A Java app that allows your browser to look at EncFS filesystems
+       stored on a cloud service such as DropBox
+          https://bitbucket.org/marcoschulte/encfsanywhere
+
+-------------------------------------------------------------------------------
+Basic Installation and setup of EncFS, using FUSE
+
+install
+   sudo apt-get install encfs
+create and/or mount
+   encfs ~/encrypted/ ~/decrypted
+unmount
+   fusermount -u ~/decrypted
+or
+   umount ~/decrypted
+
+As it is a FUSE based file system, it is completely user level controlled,
+which little kernel requirements and no superuser access.
+
+The EncFS is a 'pass-thru' file system that encrypts the individual files
+access via a fake "decrypted" file system, as individual files in the
+"encrypted" directory.
+
+This means that the files sizes, directory structure, permissions and times is
+visible in the encrypted directory tree.  Though the file names and file data
+is encrypted.
+
+However as the encrypted file system are still plain files, it can be
+incrementally backed up as files, or syncronized across multiple machines,
+using normal file system backup utilities rather than requiring the whole
+files system to be treated as a single unit, or un-encrypted for the data
+transfer.
+
+The file system also does not require pre-allocated disk space (such as a
+fix sized file, or seperate partition), but will grow and shrink as needed
+in a normal file system. That is because files are encrypted to files.
+
+You can NOT really use it to encrypt the whole home, data, system, or swap
+memory of the computer for complete protection. This is better achieved using
+a lower level disk block encryption such as the linux dmcrypt.  But then few
+people need to protect there whole computer, just the contents of a few files.
+Even then there are ways around this (see Home Directory EncFS below)
+
+-------------------------------------------------------------------------------
+Case-insensitive Filesystems
+
+To store EncFS on a file system that is case insensitive for lookup, (VFAT,
+NTFS, HFS+, etc), create it using expert mode and select B32Block or B32Stream
+as the filename cipher to use.
+
+-------------------------------------------------------------------------------
+Encrypted Filename Handling, and internals
+
+The "encfsctl" program provides utilities to encode and decode file paths.
+(given the encfs config file ".encfs6.xml" and the password).
+
+These are not all documented. A password will always be needed.
+But more importantly the encfs filesystem does not need to be mounted
+in decrypted form, to convert between a encrypted and unencrypted filename, or
+decrypt one specific file stored in the encfs filesystem.
+
+Option Examples...
+
+  encfsctl decode encfs_dir  encfs_filename
+      decrypts filename (not contents) to its unencrypted filename
+      That is is this encrypted files real filename.
+
+  encfsctl encode encfs_dir  filename
+      encrypts the given filename to the encrypted file path
+      (result includes the includes encfs_dir prefix)
+
+  encfsctl ls encfs_dir
+      decrypt and lists all filenames in a directory
+      (note top level gets listed at this time)
+
+  encfsctl cat encfs_dir  filename
+      Show contents of the file
+
+  encfsctl export encfs_dir dest_dir
+      decrypts all the files found in the encrypted directory to the dest_dir
+
+This means you can lookup and rename the encrypted filenames without needing
+actually mount the encfs filesystem.
+
+This can be used to generate a listof encrypted filenames. For example
+generate a 'exclude list' of encrypted filenames which you don't want backed
+up or copied to some remote server (EG: temorary or unimportant files or
+directories).
+
+However remember the filename encryption is dependant on the whole file path,
+unless you specifically turn off "Filename Initialization Vector Chaining".
+As such you can not simply move a encrypted file into a different
+sub-directory in the encrypted tree, as the filename in that sub-directory
+will be different.  To move a file you need to comletely rename all parts of
+its file path, including its actual filename.
+
+NOTE: If 'External IV Chaining' is turned on in the ".encfs6.xml" file (off by
+default) then the file contents will also depend on the file path in the
+encrypted directory.  In this situation, hardlinks will no longer work, and
+renaming a directory will also require a re-encryption of all the files in
+that directory.  This can be a very massive overhead, especially for very
+large files, which is why it is not enabled by default.
+
+Newer patched version...
+  Environment variable ENCFS_PASSWORD_FD with a -S option will have
+  encfsctl read passwords from the given fd (file descrptor) number rather
+  than from stndard input.
+
+  If the patch is present then 'encode' will produce a relative path
+  rather than an absolute path, making its reverse compatible of 'decode'
+  See
+    http://code.google.com/p/encfs/issues/detail?id=33
+
+
+Less obvious decode filename usage...
+
+Another less obvious way of matching a real filepath to its encrypted filepath
+is to look at the 'openfiles list' of the "encfs" process that is mounting the
+file system.
+
+For example...
+   encfs ...  /tmp/encrypted /tmp/decrypted       # Do the mount
+   pid=$(pgrep encfs)                             # find the process
+   lsof -p $pid  > t1                             # list open files
+   exec 5</tmp/decrypted/README                   # open filename to encrypt
+   lsof -p $pid  > t2                             # list open files
+   exec 5<&-                                      # close filename to encrypt
+   comm -3 t1 t2 | sed 's%.*/tmp/encrypted%%'     # compare open file lists
+Results
+   CvtrBM5uitlmTte2Hxrk0J-T
+
+So "README" is actually the encfs filename "CvtrBM5uitlmTte2Hxrk0J-T"
+
+
+Filename Encryption Algorithm (not reproducible yet)
+
+  The filename is encrypted using  MAC-16 ^ IV  and key
+  then the string...
+     MAC-16 + encrypted_filename
+  is converted to base32 or base64 depending on the filesystem case
+  sensitivity.
+
+  This is then base64 encoded which is modified such that
+  the characters './' are replaced with ',-' respectiveally.
+  see http://code.google.com/p/encfs/source/browse/trunk/encfs/base64.cpp
+  line 122
+
+  A checksum (MAC-16) is created.
+
+  The reverse is the same except the MAC checksum is compared.
+
+  See sources...
+  http://code.google.com/p/encfs/source/browse/trunk/encfs/base64.cpp
+  http://code.google.com/p/encfs/source/browse/trunk/encfs/BlockNameIO.cpp#145
+  http://code.google.com/p/encfs/source/browse/trunk/encfs/StreamNameIO.cpp#102
+
+
+  Shell equivelent (to be worked out)...
+
+
+  Shell Decrypt...
+
+
+-------------------------------------------------------------------------------
+encfs and encfsctl will read passwords from TTY by default
+
+BUT...
+
+  -S, --stdinpass
+         Read password from standard input.
+         OR from the file descriptor number in ENCFS_PASSWORD_FD
+
+  --extpass=program   lets you call a password gathering program such as
+         "ssh-askpass"  with the environment variable "RootDir" pointing to
+         the encrypted directory.   Trailing newline is striped,
+         1/2k passwords at most (though manual says it is 2K)
+
+         Program may be a shell pipeline.
+             --extpass='command_1 | command_2'
+
+        Remember for passwords any character could be used including newlines,
+        though typically newlines and nulls are not used for obvious reasons.
+        Caution is recommended.
+
+Extra FUSEmount flags (after a -- option)
+   -- -c               request kernel-level caching of file data (speed up)
+   -- -n /dev/xxx      specify this device in 'df' command output
+                       instead of reporting it as being "encfs"
+
+-------------------------------------------------------------------------------
+Remote encrypted data directories.
+
+Store the encrypted data on a remote system and mount it using "mount.cifs"
+(windows home) or "fuse-sshfs" (ssh filesystem) or even "dropbox" to
+syncronize between local and remote copies.
+
+Note you don't need encfs config file on the encrypted filesystem stored on
+the remote filesystem, though you will need it to decrypt that filesystem on
+any machine that you want to make use of it.
+
+This requires two layered FUSE mounts...
+
+  sudo yum install fuse-sshfs
+
+  sshfs user@storage:raw_data  ~/raw_data -o "uid=$(id -u),gid=$(id -g)"
+  ENCFS6_CONFIG=~/lib/encfs6.xml    encfs ~/raw_data ~/data
+
+  ...
+
+  fusermount -u ~/data
+  fusermount -u ~/raw_data
+
+-------------------------------------------------------------------------------
+EncFS also allows reversed encryption.
+
+That is keep the local data unencrypted, but create a 'EncFS' encrypted image
+of the same data, to copy to a remote system for distribution or backup.
+
+Making a copy of the reversed encrypted EncFS directory and then using
+'normal' EncFS to decrypting it should work perfectly fine.  A copy of the
+".encfs6.xml" configuration (not the password) is also transfered (unchanged)
+to ensure that this is directly posible without any extra effort.
+
+This also allow you to generate a EncFS encryption of your data, which can
+then be used to generate rsync backup 'snapshots' on a remote, and posibilty
+insecure server.  You then do not need encryption for normal use. The rsync
+delta differences used for file transfer continue to work as normal.
+
+
+Example...
+
+Setup (copy to) the encrypted backup (using reverse)
+   mkdir /tmp/backup_encrypt
+   encfs --reverse /home/me /tmp/backup_encrypt
+     ...password questions...
+   rsync -av --delete /tmp/backup_encrypt/ /external-drive/backup_enc
+   fusermount -u /tmp/backup_encrypt
+   cp /home/me/.encfs6.xml /external-drive/backup_enc
+
+The last is a precaution, I do not recommend keeping the config with
+the data in this way.
+
+The encrypted files is now stored in /external-drive/backup_enc
+What-ever and Where-ever that may be.
+
+To directly decrypt the encrypted files
+  mkdir /tmp/backup_decrypt
+  encfs /external-drive/backup_enc/ /tmp/backup_decrypt
+    ...password questions...
+  # decrypted filesystem is now mounted
+  fusermount -u /tmp/backup_decrypt
+
+
+WARNING:
+  Encfs doesn't like the temporary files that programs like rsync and unison
+  create. For each file rsync transfers, it first saves a temporary version
+  under a slightly different name, then when transfer is complete it moves the
+  file to it's intended name. As encfs --reverse can't decrypt these files it
+  raises an error.
+
+  The solution is to tell programs like this to use another directory for
+  temporary/partial files. To get rsync working I made a directory
+  '/tmp/rsync' and then tried rsync again with the -T option:
+
+    rsync -av -T /tmp/rsync homedir_crypt/ homedir_crypt2/
+
+
+-------------------------------------------------------------------------------
+EncFS Home Directories
+
+The major problem with using EncFS for a home directory is that some
+parts of the home directory MUST always be unencrypted.  Examples include
+files such as
+   .forward .procmailrc .plan   and perhaps EncFS mounting info.
+and directories such as
+   public_html
+
+
+Unfortunatally there is no simple solution to having both encrypted and
+unencrypted files in the same directory structure.
+
+One solution posted by Joe Pfeiffer <joseph@pfeifferfamily.net> in the EncFS
+mail list, is to have 3 directories.
+
+  The EncFS home directory      /home/$USER.enc
+  A unencrypted files home      /home/$USER.unenc
+  And the actual working home   /home/$USER
+
+When user logs in the EncFS home is overlayed onto the users working home.
+The working home and decrypted EncFS homes both contains symbolic links to
+the unencrypted files in the "unenc" home directory.
+
+However without some automation keeping the symbolic links to 'unenc' correct
+in BOTH normal home and the decrypted 'enc' overlay, can be a pain.
+
+This allows you to use set up pam-mount scripts that auto-decrypt the users
+home on login using the users login password.
+
+NOTE: The ".ssh" sub-directory is in the encrypted home, and as such
+public-key (password-less) login is not available until the user has logged in
+at least once using a password, so the home can be decrypted.
+
+
+-------------------------------------------------------------------------------
+Interleaved EncFS Filesystems, for Plausible Deniablity
+
+NOTE the use of a --anykey can be used to create two separate encrypted trees
+but store them using the same 'data directory' with the same 'configuration
+file'.
+
+   encfs  crypt_dir   decrypted_default
+   EnvFS Password: normal_default_pass-phrase
+
+   encfs --anykey  crypt_dir   decrypted_other
+   EnvFS Password: different_pass-phrase
+
+Basically it turns off the 'key validation' against the password hash check in
+the ".encfs6.xml" file.
+
+Also EncFS will only make filenames that successfully decrypt visible in the
+decrypted mount.
+
+If the directory mounts and contains no data, then you know you have the
+password wrong. You will not get an error about wrong password when using
+--anykey, because you turned off that check.  As such a double check of the
+initial password should be done when decrypting, by ensuring that at least one
+file (if available) has appeared in the decrypted directory.
+
+If you modify the "<encodedKeyData>" in the .encfs6.xml it will also make the
+original password used to create the config useless, and thus a normal encfs
+mounting will never succeed.  That is you must then always use the "--anykey"
+flag to mount your working encrypted filesystem.
+
+If more than two filesystems (using two passwords and same config, or even
+different configs - see below), is stored in the same encrypted filesystem,
+the files and directories will be interleaved with different sets of encrypted
+ilenames.
+
+Note however that sub-directories will remain separated, (preserving the
+original directory structure). This will make it obvious that not all the data
+was decrypted if you compare just the top level of a decrypted tree against
+and the encrypted tree, and some sub-directory with a lot of data does not
+match up.
+
+The "encfsctl" utility makes this even easier using the 'showcruft' option.
+That is to find the files NOT de-codable by a specific password use...
+
+    encfsctl showcruft crypt_dir
+    EncFS Password: any_pass-phrase
+
+However if you also add chaff, and make it known that there is a a large
+percentage of chaff in the encrypted directory, (using readme files or extra
+comments in the encfs config file), there is no way anyone can tell if what is
+left un-decrypted is actually chaff or more encrypted data.
+
+The simplest way to make chaff that looks like encfs data, would be to mount
+the directory with a junk password, copy random files and directories, then
+un-mount and forget that password.  You could also trash that config file and
+use a different config for each password you use.
+
+WARNING: If you forget a particular password, it is VERY difficult to
+determine which top-level files or directories belonged to the now lost
+password.
+
+A better but more difficult method would be the random creation of random
+files and sub-directories throughout the encrypted filesystem. This would also
+hide the original tree structure somewhat, but the administration of such
+chaff, could be a serious problem.
+
+Note be sure to 'touch' files and directories at random throughout the working
+life of the EncFS directory, you don't what the chaff to be just all the 'old'
+files.
+
+-------------------------------------------------------------------------------
+Remove the encfs config files from data directory
+Also allows use of multiple config files
+
+As a extra precaution, or to hide which ".encfs6.xml" file (and the meta-data)
+that you are using, you can move that file to another location, separating it
+from the encrypted data it decodes.  Its location can be passed to encfs
+command using the ENCFS6_CONFIG environment variable.
+
+An example of doing this was already done for example in 'remote mounted
+encrypted directories above.
+
+For example this stores the config file outside the encfs directory...
+
+   ENCFS6_CONFIG="encfs_config_file"  encfs  /tmp/encfs_dir /tmp/decoded_dir
+
+However while the encrypted filesystem is mounted the environment variable is
+visible in the process list.  But then so is the actual "encfs" command you
+used.
+
+However if you make the ENCFS6_CONFIG point to a UNIX named-pipe file, you can
+then cat the config file into the encfs command, then remove the pipe file.
+This means other users will still have no idea what config file was used for
+the currently mounted decrypted filesystem.
+
+This works and was confirmed by Valient Gough, valient_AT_gmail_DOT_com
+as the config file only open/read/close by "encfs", one time only. Once it is
+read, the config is no longer needed, as it has the encryption key in memory.
+The decrypted data remains accessable even though the configuration file is
+nolonger available.
+
+Multiple config files....
+
+As config files are now separate to the encrypted filesystem, and only read
+once, you can store them separately on a portable USB stick.  That means
+a user not only needs a password, but also a physical 'key' (the USB holding
+the config) to mount the encfs filesystem, and only during the mount process.
+
+As separate config files are able to be used you can use a seperate config for
+different passwords in a 'interleaved' encrypted filesystem (see plausible
+denyability above).  This means changing one password (and its config) will
+then not effect the password and config of another interleaved filesystem.
+
+My key storage "ks" system does this for EncFS as part of keeping configs,
+user passwords, and encrypted data, completely separate from each other.
+See "Key Storage" below.
+
+-------------------------------------------------------------------------------
+Encrypting a Secret as a EncFS filename!
+
+As a random off hand thought, using EncFS filenames to hold information.
+
+This could be used as programed method of storing secret information, using
+a internal password, and an existing external encfs config file, to decrypt
+the actual password. For example store a password some software program needs
+to access something else.  This lets you hardcode a password into a program
+without making it easy for a hacker to recover.  especially if they have the
+program but not the encfs config file!
+
+The secret information stored as an encrypted file name which is created in
+the EncFS directory using ANY password key (using --anykey), and the current
+configuration file.  Once setup you do not need to mount the EncFS directory
+to get the file name (the secret) or even have a file in the encfs directory
+tree (you will however need a EncFS tree or more specifically a encfs config
+file to use for the encryption/decryption process).
+
+That is with a 'config file' and any 'password' you can decrypt a string using
+the EncFS filename crypting method.
+
+First get the encrypted file name.
+
+   ls crypt_dir > ~/t
+
+   encfs --anykey  crypt_dir  some_where
+   EnvFS Password:  file_pass-phrase
+
+   touch some_where/SECRET_INFO_AS_A_FILENAME
+
+   fusermount -u some_where
+
+   cd crypt_dir
+   mv `ls crypt_dir | diff - ~/t`
+     # the encrypted_filename with that data
+
+The encrypted_filename is at least as long as the original filename, usually
+slightly longer due to the encryption block size used.  But you don't actually
+need the file anymore, just the string.
+
+   rm crypt_dir/encrypted_filename
+
+Now to get the secret from the string you can decrypt it as a filename.
+The file itself does not have to exist, but we need a EncFS directory or
+at least a config.
+
+   encfsctl decode crypt_dir encrypted_filename
+   EncFS Password:  file_pass-phrase
+   SECRET_INFO_AS_A_FILENAME
+
+Note it may be better and easier to do this using OpenSSL encryption, and
+a base64 hashing instead.   But it is an interesting, and novel idea, that is
+not very 'common', and thus harder for a attacker to figure out.
+
+-------------------------------------------------------------------------------
+Encrypt Filesystem on the Encrypted Filesystem
+
+This should be very possible, but probably would not provide any real benefit
+in terms of security.   You just need two passwords to decrypt things down to
+the final level.
+
+It just adds more overhead to an already secure encryption.
+
+Basically this is not a good idea.
+
+-------------------------------------------------------------------------------
+EncFS Key Storage System ("ks")
+
+Protect Encrypted Filesystems with Encrypted 'Key' Files (similar to LUKS)
+   http://www.ict.griffith.edu.au/anthony/software/#ks
+
+A better more secure technique, with very little overhead, is to use the user
+password, to decrypt a 'key file' that holds the real password used to decrypt
+the data.
+
+This extra level of indirection allows real data to be encrypted with
+a strong, randomly generated keys, while storing that key and all the other
+configuation information in a completely separate area. The user does not need
+to personally know that hard to remember purely random master password, or any
+details of the encryption.
+
+Not only that but by using 'key files', the users password can be changed
+easilly simply by re-encrypting the 'key file' without needing to decrypt,
+copy, and re-encrypt the actual data, which can take a very long time.
+Basically the hard to remember master password remains the same.
+
+You can even give different users their own 'key file' with their own separate
+password, to decrypt the same data. Individual users do not need to share the
+password, and administaions can control access via each users individual 'key
+file'.
+
+This two-stage password indirection is used by LUKS disk encryption and
+is presented in the paper...
+   "TKS1, An anti-forensic, two level, and iterated key setup scheme."
+       http://clemens.endorphin.org/TKS1-draft.pdf
+
+Also see..
+   Dual password encryption with EncFS
+     http://magazine.redhat.com/2007/06/13/dual-password
+
+And my own "Key Store" ("ks") script that provides this method for EncFS.
+   http://www.ict.griffith.edu.au/anthony/software/#ks
+
+'Key Store' stores the 'key files' in a completely separate area such as
+a removable USB stick, so that you can also include some physical security of
+the access keys, if you so desire.
+
+The key files also hold all the other details of the encryption: such as the
+actual ".encfs6.xml" configuration file to use, the location of the encrypted
+data, optionally where it should be mounted (if fixed).  Why make that
+information easilly accessable when there is no need for it to be.
+
+It has extra benifits too. The command used to to access (mount or display)
+the data, is also stored in the key files allowing any type of encryption to
+be used, not just EncFS.  Or you can set up a key file that if used, runs
+a command to destroy the encryption (removes or modified the real key file, or
+encryption itself).
+
+The key files also provide a way of encrypting small file, stored in the key
+file itself.  This is useful to store text files whcih say holds all your web
+passwords, for easy access when needed, but without needing a large separate
+encrypted data store (EncFS), for it.  In this case the key file itself is
+the data, with the master key information not being used.
+
+
+-------------------------------------------------------------------------------
+
