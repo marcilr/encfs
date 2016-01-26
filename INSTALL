@@ -11,7 +11,8 @@ malachite: Debian squeeze amd64 6.0.7
 1. On malachite install encfs and fuse-utils:
 malachite:~# aptitude install encfs fuse-utils
 The following NEW packages will be installed:
-  encfs libboost-filesystem1.42.0{a} libboost-serialization1.42.0{a} libboost-system1.42.0{a} librlog5{a} 
+  encfs libboost-filesystem1.42.0{a} libboost-serialization1.42.0{a} \
+  libboost-system1.42.0{a} librlog5{a} 
 0 packages upgraded, 5 newly installed, 0 to remove and 0 not upgraded.
 Need to get 754 kB of archives. After unpacking 3,265 kB will be used.
 Do you want to continue? [Y/n/?] Y
@@ -28,8 +29,8 @@ NOTE: fuse-utils was already installed.
 
 malachite:~# modprobe fuse
 
-2. Since we don't want to modprobe each time we reboot, add "fuse" to /etc/modules
-(without quotes, on a line of its own)
+2. Since we don't want to modprobe each time we reboot, add "fuse" to
+/etc/modules (without quotes, on a line of its own)
 
 NOTE: This was already configured.
 
@@ -51,8 +52,9 @@ malachite:~# chmod 775 /usr/local/encrypted
 malachite:~# chmod g+s /usr/local/encrypted
 
 6. Add /usr/local/encrypted to /etc/fstab:66 on malachite:
-sshfs#sshfs@10.1.0.65:/data/encrypted  /usr/local/encrypted fuse defaults,user,\
-uid=1010,gid=1010,port=60143,IdentityFile=/home/sshfs/.ssh/rsa8192_openssh,noauto 0 0
+sshfs#sshfs@10.1.0.65:/data/encrypted  /usr/local/encrypted fuse defaults,\
+user,uid=1010,gid=1010,port=60143,IdentityFile=\
+/home/sshfs/.ssh/rsa8192_openssh,noauto 0 0
 
 7. Mount /use/local/encrypted/ on malachite:
 malachite:~$ mount /usr/local/encrypted
@@ -69,8 +71,8 @@ malachite:~$ mkdir decrypted
 malachite:~$ chmod 700 decrypted/
 
 9. Create the EncFS encrypted filesystem :
-The first time you try to mount the directory, encfs will create the encrypted filesystem.
-It works like the regular mount: 
+The first time you try to mount the directory, encfs will create the encrypted
+filesystem.  It works like the regular mount: 
 
 syntax: encfs <folder to mount> <mount point>
 
@@ -152,8 +154,8 @@ vectors, which does not come with as great of performance
 penalty. 
 Select a number of bytes, from 0 (no random bytes) to 8: 0
 
-NOTE: Per-file initialization vectors were enabled so set this to 0 (no random bytes)
-      to disable.
+NOTE: Per-file initialization vectors were enabled so set this to 0 (no random
+      bytes) to disable.
 
 Enable file-hole pass-through?
 This avoids writing encrypted blocks when file holes are created.
@@ -192,76 +194,86 @@ $ fusermount -u /home/marcilr/decrypted/
 
 Filename Encoding
 =================
-New in 1.1. A choice is given between stream encoding of filename and block encoding.  The
-advantage of stream encoding is that the encoded filenames will be as short as possible.  If you
-have a filename with a single letter, it will be very short in the encoded form, where as block
-encoded filenames are always rounded up to the block size of the encryption cipher (8 bytes for
+New in 1.1. A choice is given between stream encoding of filename and block
+encoding.  The advantage of stream encoding is that the encoded filenames will
+be as short as possible.  If you have a filename with a single letter, it will
+be very short in the encoded form, where as block encoded filenames are always
+rounded up to the block size of the encryption cipher (8 bytes for
 Blowfish and 16 bytes for AES ).
 
-The advantage of block encoding mode is that filename lenths all come out as a multiple of the
-cipher block size.  This means that someone looking at your encrypted data can't tell as much
-about the length of your filenames.  It is on by default, as it takes a similar amount of time
-to using the stream cipher.  However stream cipher mode may be useful if you want shorter
-encrypted filenames for some reason.
+The advantage of block encoding mode is that filename lenths all come out as a
+multiple of the cipher block size.  This means that someone looking at your
+encrypted data can't tell as much about the length of your filenames.  It is
+on by default, as it takes a similar amount of time to using the stream cipher.
+However stream cipher mode may be useful if you want shorter encrypted
+filenames for some reason.
 
 Prior to version 1.1, only stream encoding was supported. 
 
 
 Filename Initialization Vector Chaining
 =======================================
-New in 1.1.  In previous versions of EncFS, each filename element in a path was encoded separately.
-So if "foo" encoded to " XXX ", then it would always encode that way (given the same encryption
-key), no matter if the path was "a/b/foo", or "aa/foo/cc", etc. That meant it was possible for
-someone looking at the encrypted data to see if two files in different directories had the same
+New in 1.1.  In previous versions of EncFS, each filename element in a path
+was encoded separately.  So if "foo" encoded to " XXX ", then it would always
+encode that way (given the same encryption key), no matter if the path was
+"a/b/foo", or "aa/foo/cc", etc. That meant it was possible for someone looking
+at the encrypted data to see if two files in different directories had the same
 name, even though they wouldn't know what that name decoded to.
 
-With initialization vector chaining, each directory gets its own initialization vector.  So "a/foo"
-and "b/foo" will have completely different encoded names for "foo".  This features has almost no
-performance impact (for most operations), and so is the default in all modes.
+With initialization vector chaining, each directory gets its own
+initialization vector.  So "a/foo" and "b/foo" will have completely different
+encoded names for "foo".  This features has almost no performance impact (for
+most operations), and so is the default in all modes.
 
-Note: One significant performance exception is directory renames.  Since the initialization vector
-for filename encoding depends on the directory path, any rename requires re-encoding every
-filename in the tree of the directory being changed. If there are thousands of files, then EncFS
-will have to do thousands of renames.  It may also be possible that EncFS will come across a file
-that it can't decode or doesn't have permission to move during the rename operation, in which case
-it will attempt to undo any changes it made up to that point and the rename will fail. 
+Note: One significant performance exception is directory renames.  Since the
+initialization vector for filename encoding depends on the directory path, any
+rename requires re-encoding every filename in the tree of the directory being
+changed. If there are thousands of files, then EncFS will have to do thousands
+of renames.  It may also be possible that EncFS will come across a file that
+it can't decode or doesn't have permission to move during the rename operation,
+in which case it will attempt to undo any changes it made up to that point and
+the rename will fail. 
 
 
 Per-File Initialization Vectors
 ===============================
-New in 1.1. In previous versions of EncFS, each file was encoded in the same way.  Each block in a
-file has always had its own initialization vector, but in a deterministic way so that block N in
-one file is encoded in the same was as block N in another file.  That made it possible for someone
-to tell if two files were identical (or parts of the file were identical) by comparing the encoded
-data.
+New in 1.1. In previous versions of EncFS, each file was encoded in the same
+way.  Each block in a file has always had its own initialization vector, but
+in a deterministic way so that block N in one file is encoded in the same was
+as block N in another file.  That made it possible for someone to tell if two
+files were identical (or parts of the file were identical) by comparing the
+encoded data.
 
-With per-file initialization vectors, each file gets its own 64bit random initialization vector,
-so that each file is encrypted in a different way.
+With per-file initialization vectors, each file gets its own 64bit random
+initialization vector, so that each file is encrypted in a different way.
 
 This option is enabled by default. 
 
 
 External IV Chaining
 ====================
-New in 1.1.3.  This option is closely related to Per-File Initialization Vectors and Filename
-Initialization Vector Chaining. Basically it extends the initialization vector chaining from
-filenames to the per-file initialization vector.
+New in 1.1.3.  This option is closely related to Per-File Initialization
+Vectors and Filename Initialization Vector Chaining. Basically it extends the
+initialization vector chaining from filenames to the per-file initialization
+vector.
 
-When this option is enabled, the per-file initialization vector is encoded using the
-initialization vector derived from the filename initialization vector chaining code.  This means
-that the data in a file becomes tied to the filename.  If an encrypted file is renamed outside of
-encfs, it will no longer be decodable within encfs.  Note that unless Block MAC headers are
-enabled, the decoding error will not be detected and will result in reading random looking data.
+When this option is enabled, the per-file initialization vector is encoded
+using the initialization vector derived from the filename initialization
+vector chaining code.  This means that the data in a file becomes tied to the
+filename.  If an encrypted file is renamed outside of encfs, it will no longer
+be decodable within encfs.  Note that unless Block MAC headers are enabled,
+the decoding error will not be detected and will result in reading random
+looking data.
 
-There is a cost associated with this.  When External IV Chaining is enabled, hard links will not
-be allowed within the filesystem, as there would be no way to properly decode two different
-filenames pointing to the same data.
+There is a cost associated with this.  When External IV Chaining is enabled,
+hard links will not be allowed within the filesystem, as there would be no way
+to properly decode two different filenames pointing to the same data.
 
-Also, renaming a file requires modifying the file header. So renames will only be allowed when the
-user has write access to the file.
+Also, renaming a file requires modifying the file header. So renames will only
+be allowed when the user has write access to the file.
 
-Because of these limits, this option is disabled by default for standard mode (and enabled by
-default for paranoia mode). 
+Because of these limits, this option is disabled by default for standard mode
+(and enabled by default for paranoia mode). 
 
 
 linux.die.net/man/1/encfs
