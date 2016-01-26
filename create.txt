@@ -1,0 +1,17 @@
+create.txt
+Created Tue Jan 26 11:08:32 AKST 2016
+Copyright (C) 2016 by Raymond E. Marcil <marcilr@gmail.com>
+
+
+Create and/or mount:
+
+$ encfs ~/encrypted/ ~/decrypted
+
+-- ict.griffith.edu.au/
+
+
+Links
+=====
+EncFS - Encrypted File System (micro-how-to)
+https://www.ict.griffith.edu.au/anthony/info/crypto/encfs.hints
+
