@@ -18,6 +18,9 @@ http://en.wikipedia.org/wiki/EncFS
 EncFS - ArchWiki
 https://wiki.archlinux.org/index.php/EncFS
 
+EncFS - Encrypted File System (micro-how-to)
+https://www.ict.griffith.edu.au/anthony/info/crypto/encfs.hints
+
 Encfs hints
 http://www.ict.griffith.edu.au/anthony/info/crypto/encfs.hints
 
