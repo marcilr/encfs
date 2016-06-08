@@ -24,6 +24,11 @@ https://www.ict.griffith.edu.au/anthony/info/crypto/encfs.hints
 Encfs hints
 http://www.ict.griffith.edu.au/anthony/info/crypto/encfs.hints
 
+EncFS Security Audit
+Taylor Hornby
+January 14, 2014 (Updated: February 5, 2014)
+https://defuse.ca/audits/encfs.htm
+
 EncFS website
 http://www.arg0.net/encfs
 
