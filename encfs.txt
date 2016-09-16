@@ -1,0 +1,109 @@
+encfs.txt
+Created Thu Apr 11 09:40:08 AKDT 2013
+Copyright (C) 2013 by Raymond E. Marcil <marcilr@gmail.com>
+
+
+EncFS FUSE-based cryptographic filesystem
+
+
+The EncFS file system is an ordinary directory containing encrypted files
+using a encryption hashed' filenames.  This 'directory' is mounted to another
+directory (using fuse) where it will appear in its decrypted form.
+
+That is the encrypted files are just ordinary binary files and with the
+correct times and tree structure. Only the names and contents of the files
+remain hidden.  The directory tree and rough file sizes are preserved!
+
+-- ict.griffith.edu.au
+
+
+Advantages
+==========
+* The encrypted can be stored on any normal file system, again without
+  decryption. That includes SAN, USB, or DVDs.  You do not even need to
+  worry that the 'remote' file services have access to your data as their
+  system never sees the decrypted data or passwords.  By default they
+  could see the encfs config file, unless separated (see below).
+
+* Hardlinks work if the underlying filesystem allows their use.
+
+* You can copy, update or synchronised the directory with another copy of
+  that directory (say on another machine) without needing to decrypt it or
+  even have the password!  As such automated backups can still be performed
+  securely, even by other people.
+
+* Similarly you can use Rsync 'delta difference' to syncronize between
+  multiple copies of the same encrypted file system!!!!  In fact ANY file
+  system copy or transfer method can be used.  The files remain... files.
+
+* You can syncronize with 'the cloud' without worry about some unknown SysOp
+  looking at your files, regardless of what the their policy is or is not.
+
+* You can (with special techniques) merge two or more (I have a dozen)
+  encrypted directories trees into the same top level (or faked top levels)
+  of the same encrypted data directory.
+
+  There is a small chance of filename clashes.  That is one encrypted
+  filename is used by two seperate repositories, but is is highly unlikely.
+  This is can only happen on the top level as sub-directories contents
+  remain separate, as each sub-directory can only belong to one specific
+  encfs repository.
+
+* You can add 'chaff' to the encrypted directory with (faked hashed file
+  names and directories) to prevent someone knowng if all the data was
+  decrypted or by which password. Some files may never be decryptable, or
+  may have been created and left behind by 'lost' password. This allows
+  you to prevent rubber hose attacks if you make it obvious such chaff data
+  exists.
+
+-- ict.griffith.edu.au
+
+
+Disadvantages
+=============
+* Some overhead (but what scheme hasn't).
+
+* Directory Structure and rough (not exact) files sizes in each directory is
+  visible.  The directory structure could have and should have be hidden in
+  a similar way to other file systems. That is a directory should have been
+  a special file containing a list of file pointers, files broken into
+  multiple smaller files, and file attributes stored in a file header (inode
+  equivelent).
+
+* The 'encrypted hash filenames' make it obvious the directory contains an
+  EncFS (or similar) filesystem.  The presence of a encfs config file
+  would simply confirm this (you can store that config elsewhere).
+
+* Most of the encrypting information (apart from the users password)
+  including iteration count, and salt, is visible in the encfs config file
+  at the top level of the encfs directory tree.  This provides valuable
+  information to a hacker.  Better to keep that information seperate (and
+  private) even if it is not strictly needed for encryption security.
+  Keep it on a USB as a required but separate physical key. See config
+  separation below.
+
+* Some management of configuration files, and for adding chaff to
+  sub-directores is probably needed.
+
+* Removal of excess and unwanted 'chaff' in a encfs directory is next to
+  imposible, unless a 'chaff dataset' is used. The only way to separate
+  chaff from real data is to decrypt and move all known and valid data to
+  a new encfs directory.
+
+-- ict.griffith.edu.au
+
+
+
+
+Links
+=====
+EncFS website 
+http://www.arg0.net/encfs
+
+EncFS
+From Wikipedia, the free encyclopedia
+http://en.wikipedia.org/wiki/EncFS
+
+EncFS - Encrypted File System (micro-how-to)
+https://www.ict.griffith.edu.au/anthony/info/crypto/encfs.hints
+

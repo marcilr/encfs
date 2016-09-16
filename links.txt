@@ -1,0 +1,48 @@
+links.txt
+Created Thu Apr 11 09:41:04 AKDT 2013
+Copyright (C) 2013 by Raymond E. Marcil <marcilr@gmail.com>
+
+
+EncFS related links
+
+
+Links
+=====
+Automounting EncFS Using fstab
+http://scrupp.de/2012/07/automounting-encfs-using-fstab/
+
+EncFS
+From Wikipedia, the free encyclopedia
+http://en.wikipedia.org/wiki/EncFS
+
+EncFS - ArchWiki
+https://wiki.archlinux.org/index.php/EncFS
+
+EncFS - Encrypted File System (micro-how-to)
+https://www.ict.griffith.edu.au/anthony/info/crypto/encfs.hints
+
+Encfs hints
+http://www.ict.griffith.edu.au/anthony/info/crypto/encfs.hints
+
+EncFS Security Audit
+Taylor Hornby
+January 14, 2014 (Updated: February 5, 2014)
+https://defuse.ca/audits/encfs.htm
+
+EncFS website
+http://www.arg0.net/encfs
+
+GEncfsM
+gnome-encfs integrates EncFS folders into the GNOME desktop by storing
+their passwords in the keyring and optionally mounting them at login
+using GNOME's autostart mechanism.
+https://bitbucket.org/obensonne/gnome-encfs
+
+HOWTO: EncFS in Ubuntu and Fedora GNU/Linux
+http://www.movingtofreedom.org/2007/02/21/howto-encfs-encrypted-file-system-in-ubuntu-and-fedora-gnu-linux/
+
+HOWTO: Encrypted directory with EncFS
+http://ubuntuforums.org/showthread.php?t=148600
+
+HOWTO: Install EncFS on OSX to encrypt-decrypt Dropbox content realtime
+http://janaksingh.com/blog/dropbox-encryption-install-encfs-osx-encrypt-decrypt-dropbox-content-realtime-154/
